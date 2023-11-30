@@ -9,16 +9,23 @@ Source: https://sketchfab.com/3d-models/foxs-islands-163b68e09fcc47618450150be77
 Title: Fox's islands
 */
 
-import React, { useRef,useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import islandScene from "../assets/3d/island.glb";
 import { useFrame, useThree } from "@react-three/fiber";
 import { a } from "@react-spring/three";
 
-export default function Island(
-    props) {
+export default function Island({
+  isRotating,
+  setIsRotating,
+  setCurrentStage,
+  currentFocusPoint,
+  ...props
+}) {
   const { nodes, materials } = useGLTF(islandScene);
   const islandRef = useRef();
+  // Use a ref for rotation speed
+  const rotationSpeed = useRef(0);
   return (
     <a.group {...props} ref={islandRef}>
       <mesh

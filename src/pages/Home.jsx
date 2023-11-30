@@ -23,6 +23,7 @@ function Home() {
     return [screenScale, screenPosition];
   };
   const [isRotating, setIsRotating] = useState(false);
+  const [currentStage, setCurrentStage] = useState(1);
   const [islandScale, islandPosition] = adjustIslandForScreenSize();
   return (
     <section className="w-full h-screen relative">
@@ -50,6 +51,9 @@ function Home() {
           />
            <Sky isRotating={isRotating} />
           <Island
+            isRotating={isRotating}
+            setIsRotating={setIsRotating}
+            setCurrentStage={setCurrentStage}
             position={islandPosition}
             scale={islandScale}
             rotation={[0.1, 4.7077, 0]}
