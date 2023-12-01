@@ -22,10 +22,92 @@ export default function Island({
   currentFocusPoint,
   ...props
 }) {
-  const { nodes, materials } = useGLTF(islandScene);
   const islandRef = useRef();
+  // Get access to the Three.js renderer and viewport
+  const { gl, viewport } = useThree();
+  const { nodes, materials } = useGLTF(islandScene);
+
+  // Use a ref for the last mouse x position
+  const lastX = useRef(0);
   // Use a ref for rotation speed
   const rotationSpeed = useRef(0);
+  // Define a damping factor to control rotation damping
+  const dampingFactor = 0.95;
+
+  // Handle pointer (mouse or touch) down event
+  const handlePointerDown = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setIsRotating(true);
+
+    // Calculate the clientX based on whether it's a touch event or a mouse event
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+
+    // Store the current clientX position for reference
+    lastX.current = clientX;
+  };
+
+  // Handle pointer (mouse or touch) up event
+  const handlePointerUp = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setIsRotating(false);
+  };
+
+  const handlePointerMove = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (isRotating) {
+      // If rotation is enabled, calculate the change in clientX position
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+
+      // calculate the change in the horizontal position of the mouse cursor or touch input,
+      // relative to the viewport's width
+      const delta = (clientX - lastX.current) / viewport.width;
+
+      // Update the island's rotation based on the mouse/touch movement
+      islandRef.current.rotation.y += delta * 0.01 * Math.PI;
+
+      // Update the reference for the last clientX position
+      lastX.current = clientX;
+
+      // Update the rotation speed
+      rotationSpeed.current = delta * 0.01 * Math.PI;
+    }
+  };
+
+  useEffect(() => {
+    // Add event listeners for pointer and keyboard events
+    const canvas = gl.domElement;
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointerup", handlePointerUp);
+    canvas.addEventListener("pointermove", handlePointerMove);
+
+
+    // Remove event listeners when component unmounts
+    return () => {
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointerup", handlePointerUp);
+      canvas.removeEventListener("pointermove", handlePointerMove);
+
+    };
+  }, [gl, handlePointerDown, handlePointerUp, handlePointerMove]);
+
+  useFrame(() => {
+    // If not rotating, apply damping to slow down the rotation (smoothly)
+    if (!isRotating) {
+      // Apply damping factor
+      rotationSpeed.current *= dampingFactor;
+
+      // Stop rotation when speed is very small
+      if (Math.abs(rotationSpeed.current) < 0.001) {
+        rotationSpeed.current = 0;
+      }
+
+      islandRef.current.rotation.y += rotationSpeed.current;
+    } 
+  });
+
   return (
     <a.group {...props} ref={islandRef}>
       <mesh
